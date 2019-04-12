@@ -1,4 +1,4 @@
-const applescript = require('applescript');
+const runApplescript = require('run-applescript');
 
 const getBrowserLauncher = function(browserName) {
   return function(url) {
@@ -16,15 +16,10 @@ const getBrowserLauncher = function(browserName) {
     return wasopen
     `;
 
-    applescript.execString(script, (err, retVal) => {
-      if (err) {
-        throw err;
-      }
-      this._wasOpen = false;
-
-      if (retVal === 'true') {
-        this._wasOpen = true;
-      }
+    runApplescript(script).then((result) => {
+      this._wasOpen = (result === 'true');
+    }).catch((err) => {
+      throw err;
     });
   };
 };
@@ -44,11 +39,11 @@ const getBrowserKiller = function(browserName) {
     end tell
     `;
 
-    applescript.execString(script, function(err) {
-      if (err) {
-        throw err;
-      }
+    runApplescript(script).then((result) => {
       done();
+    }).catch((err) => {
+      done();
+      throw err;
     });
   };
 };
