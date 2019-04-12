@@ -1,0 +1,55 @@
+{
+  "name": "karma-safari-applescript-launcher",
+  "version": "0.0.0",
+  "description": "A Safari and Safari Technology Preview Launcher using applescript",
+  "main": "index.js",
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brandonocasey/karma-safari-applescript-launcher"
+  },
+  "author": "Brandon Casey <brandonocasey@gmail.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "applescript": "^1.0.0"
+  },
+  "scripts": {
+    "lint": "vjsstandard",
+    "pretest": "npm run lint",
+    "test": "npm run test:verify",
+    "test:verify": "vjsverify --skip-es-check --verbose",
+    "preversion": "npm test",
+    "version": "is-prerelease || npm run update-changelog && git add CHANGELOG.md",
+    "update-changelog": "conventional-changelog -p videojs -i CHANGELOG.md -s",
+    "prepublishOnly": "npm run test:verify"
+  },
+  "lint-staged": {
+    "*.js": [
+      "vjsstandard --fix",
+      "git add"
+    ],
+    "README.md": [
+      "doctoc",
+      "git add"
+    ]
+  },
+  "vjsstandard": {
+    "ignore": [
+      "test/fixture"
+    ]
+  },
+  "devDependencies": {
+    "@videojs/generator-helpers": "~1.0.0",
+    "videojs-generator-verify": "~1.2.0",
+    "videojs-standard": "^8.0.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/brandonocasey/karma-safari-applescript-launcher/issues"
+  },
+  "homepage": "https://github.com/brandonocasey/karma-safari-applescript-launcher"
+}
