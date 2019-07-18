@@ -1,6 +1,6 @@
 {
   "name": "karma-safari-applescript-launcher",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Safari and Safari Technology Preview Launcher using applescript",
   "main": "index.js",
   "keywords": [],
