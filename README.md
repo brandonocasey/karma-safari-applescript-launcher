@@ -6,7 +6,7 @@
 
 [![NPM](https://nodei.co/npm/karma-safari-applescript-launcher.png?downloads=true&downloadRank=true)](https://nodei.co/npm/karma-safari-applescript-launcher/)
 
-A tool to verify that a generator-videojs-plugin project is ready for publish.
+A karma launcher for Safari and SafariTechPreview
 
 Maintenance Status: Stable
 
@@ -16,14 +16,9 @@ Maintenance Status: Stable
 
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Command line](#command-line)
-  - [API](#api)
-    - [Options](#options)
-      - [`verbose`](#verbose)
-      - [`quiet`](#quiet)
-      - [`dir`](#dir)
-      - [`skipEsCheck`](#skipescheck)
-- [What is tested](#what-is-tested)
+- [How it works](#how-it-works)
+  - [How it "starts"](#how-it-starts)
+  - [How it "finishes"](#how-it-finishes)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
