@@ -11,7 +11,7 @@
   "author": "Brandon Casey <brandonocasey@gmail.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "run-applescript": "^3.2.0"
+    "run-applescript": "^4.0.0"
   },
   "scripts": {
     "lint": "vjsstandard",
