@@ -5,19 +5,56 @@ const getBrowserLauncher = function(browserName) {
     this._url = url;
 
     // record if safari was already open via `wasopen`
-    // then open safari with a tab at `karma url`
-    // safari was open a
-    const script = `
+    // that way we know if we should quit or keep it open after the run.
+    const checkOpen = `
     set wasopen to false
     if application "${browserName}" is running then set wasopen to true
-    tell application "${browserName}"
-      make new document with properties {URL:"${url}"}
-    end tell
     return wasopen
     `;
 
-    runApplescript(script).then((result) => {
+    // The following changes prevent Safari from moving to the background
+    // thus allowing testing to complete as needed.
+    // 1. find the window/tab object for the karma url
+    // 2. If there was no tab, open a new window with the testing url
+    // 3. If we found a window make sure it is ontop of all other windows
+    // 4. Make sure that safari is visible
+    const keepRunning = `
+    tell application "${browserName}"
+      set testingTab to false
+      set testingWindow to false
+
+      repeat with w in (every window)
+        repeat with t in (tab of w)
+          if URL of t is equal to "${url}" then
+            set testingTab to t
+            set testingWindow to w
+          end if
+        end repeat
+      end repeat
+
+      if testingTab is equal to false then
+        make new document with properties {URL:"${url}"}
+      end if
+
+      if testingWindow is not equal to false then
+        set index of testingWindow to 1
+      end if
+    end tell
+
+    tell application "System Events"
+      set visible of application process "${browserName}" to true
+    end tell
+    `;
+
+    runApplescript(checkOpen).then((result) => {
       this._wasOpen = (result === 'true');
+
+      runApplescript(keepRunning);
+      this._keepRunningInterval = setInterval(() => runApplescript(keepRunning), 2000);
+      // make sure that ctrl-c etc still work to quit testing
+      process.on('beforeExit', () => {
+        clearInterval(this._keepRunningInterval);
+      });
     }).catch((err) => {
       throw err;
     });
@@ -39,6 +76,7 @@ const getBrowserKiller = function(browserName) {
     end tell
     `;
 
+    clearInterval(this._keepRunningInterval);
     runApplescript(script).then((result) => {
       done();
     }).catch((err) => {
