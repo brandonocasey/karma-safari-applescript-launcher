@@ -10,6 +10,17 @@ const getBrowserLauncher = function(browserName) {
     const script = `
     set wasopen to false
     if application "${browserName}" is running then set wasopen to true
+    tell application "${browserName}" to activate
+    tell application "System Events"    
+        click menu item "Clear History…" of menu 1 of menu bar item "History" of menu bar 1 of process "${browserName}"    
+        try        
+            click button "Clear History" of front window of process "${browserName}"        
+        on error
+            try
+                click button "Clear History" of sheet 1 of window 1 of process "${browserName}"            
+            end try
+        end try
+    end tell
     tell application "${browserName}"
       make new document with properties {URL:"${url}"}
     end tell
