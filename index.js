@@ -1,16 +1,35 @@
+const childProcess = require('child_process');
 const runApplescript = require('run-applescript');
 
-const getBrowserLauncher = function(browserName) {
-  return function(url) {
-    this._url = url;
-
-    // record if safari was already open via `wasopen`
-    // that way we know if we should quit or keep it open after the run.
-    const checkOpen = `
+const checkWasOpen = function(browserName) {
+  // record if safari was already open via `wasopen`
+  // that way we know if we should quit or keep it open after the run.
+  const script = `
     set wasopen to false
     if application "${browserName}" is running then set wasopen to true
     return wasopen
     `;
+
+  return runApplescript(script).then((result) => {
+    return Promise.resolve(result === 'true');
+  });
+};
+
+const getSafariSettings = (browserName) => new Promise(function(resolve, reject) {
+  const stdout = childProcess.execSync(`defaults read com.apple.${browserName} IncludeInternalDebugMenu`);
+
+  return resolve(stdout && stdout.toString().trim() === 1);
+});
+
+const setSafariSetting = (browserName, settings) => new Promise(function(resolve, reject) {
+  childProcess.execSync(`defaults write com.apple.${browserName} IncludeInternalDebugMenu ${active ? '1' : '0'}`);
+
+  return resolve();
+});
+
+const getBrowserLauncher = function(browserName) {
+  return function(url) {
+    this._url = url;
 
     // The following changes prevent Safari from moving to the background
     // thus allowing testing to complete as needed.
@@ -43,17 +62,41 @@ const getBrowserLauncher = function(browserName) {
 
     tell application "System Events"
       set visible of application process "${browserName}" to true
+      tell process "${browserName}"
+          click menu item "Reset Safari…" of menu 1 of menu bar item "Safari" of menu bar 1
+          delay 1
+          click button "Reset" of window "Reset Safari"
+          delay 1
+      end tell
     end tell
     `;
 
-    runApplescript(checkOpen).then((result) => {
-      this._wasOpen = (result === 'true');
+    const keepRunningTimeout = () => {
+      runApplescript(keepRunning).then(() => {
+        this._keepRunningTimeout = setTimeout(() => {
+          keepRunningTimeout();
+        }, 2000);
+      });
+    };
 
-      runApplescript(keepRunning);
-      this._keepRunningInterval = setInterval(() => runApplescript(keepRunning), 2000);
+    Promise.all([
+      checkWasOpen(browserName),
+      checkDebugMenu(browserName)
+    ]).then(([wasOpen, hadDebug]) => {
+      this._wasOpen = wasOpen;
+      this._hadDebug = hadDebug;
+
+      if (hadDebug) {
+        return Promise.resolve();
+      }
+      return setDebugMenu(browserName, true);
+
+    }).then(() => {
+
+      keepRunningTimeout();
       // make sure that ctrl-c etc still work to quit testing
       process.on('beforeExit', () => {
-        clearInterval(this._keepRunningInterval);
+        clearTimeout(this._keepRunningTimeout);
       });
     }).catch((err) => {
       throw err;
@@ -76,8 +119,12 @@ const getBrowserKiller = function(browserName) {
     end tell
     `;
 
-    clearInterval(this._keepRunningInterval);
-    runApplescript(script).then((result) => {
+    clearTimeout(this._keepRunningTimeout);
+
+    Promise.all([
+      runApplescript(script),
+      this._hadDebug ? Promise.resolve() : setDebugMenu(browserName, false)
+    ]).then(() => {
       done();
     }).catch((err) => {
       done();
